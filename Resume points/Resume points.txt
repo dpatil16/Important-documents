@@ -1,0 +1,46 @@
+1) Streamlined the CI/CD pipeline using Jenkins, integrating code from GIT/GitHub, executing Maven-driven builds, performing SonarQube testing(code analysis on SonarQube server), and storing those verified artifacts in NEXUS repository/Amazon ECR. Orchestrated deployment on Amazon ECS for efficient software releases.
+
+
+2)Authored comprehensive Kubernetes definition files for deploying and managing clusters effectively.
+
+--> responsible for defining Kubernetes definition files which include configuration files such as YAML manifests for deploying and managing applications
+    on Kubernetes cluster. it includes like number of replicas for the app, container port, labels and selectors,  and load balancer type. defined both deployment and service resources in a file.
+
+
+3) Developed Python scripts to fetch data from ServiceNow via REST APIs and save it into local files for further processing.
+4) Automated daily monitoring activities for the support team using Python scripts, sending email alerts for service success or failure.
+
+--> Support team used to send report on mail to client everyday. the report included start time, end time and time difference of the jobs as well as feed file name and their counts and it's status in the logs, code goes through a particular directories in server and collects all these data. Inside a log there is so many data so our code is filtering the required data from the log and adding it in mail in a tabular format.
+
+--> code is also generating/adding incidents related to the app generated on service now. For that we're using REST api of snow and proxy server. we are
+    passing the data request in query format and receiving data in json. again we are doing filtering of the required data and sending incident related
+    details in tabular format.
+
+
+5) Designed and customized Datadog dashboards to monitor and optimize server performance, tracking metrics such as CPU usage, memory utilization, network usage, etc.
+
+--> used various metrics to track the data, for e.g to show disk space used in percentage in a widget we used two metrics and formula like metric A is
+    system.disk.used and metric B is system.disk.total and formula is (used/total)*100. Also created alerts for the team if cpu usage or network usage
+   is crossing the threshold value.
+  
+
+6) Developed Ansible Playbooks integrated with ServiceNow to automate daily tasks such as application validations, start/stop of Tomcat servers, and traffic failover, significantly reducing manual efforts and change tasks.
+
+--> three datacenters named ssb,bdc and wdc having 2 servers each. During validation of DTS app In order to stop one datacenter through ansible playbook(script) two must be on. So first we will run the playbook on two remaining datacenters to check if they are running and we will stop bdc datacenter (for e.g.) and we will receive mail for that and once team is done with validation again we will run playbook for start the datacenter and again will grep some data through logs and send us on mail so we will know datacenter has started successfully
+
+
+
+
+
+
+
+7) Created shell scripts to fetch the latest files from GitHub repositories and store them locally for development and testing purposes.
+
+--> We have created 'ssh public key' for github account from our Linux server using 'ssh-keygen' command, cat to the path where key is stored and pasted it
+    on github's 'new ssh key'. then using git clone command we have cloned our github's repo on Linux server. "git clone    git@githubdev.discoverfinancial.com:dchandu/trial.git". And then out of all the files in 'dev' branch we are filtering the files which are generated 30 mins
+ago.
+
+
+
+
+
