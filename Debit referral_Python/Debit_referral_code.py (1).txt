@@ -1,0 +1,733 @@
+#Purge job details included.
+
+#!/usr/bin/env python3
+
+import os
+from datetime import datetime
+from datetime import date
+import time
+import re
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from datetime import timedelta
+from urllib3 import ProxyManager, make_headers
+import json
+
+#PROD PATHS
+DIR1= "/sys_data/debit_referral/logs/"
+
+DIR2= "/sys_data/debit_referral/outbound/archive/"
+
+
+MAIL_FROM = "noreply@rwlp1174.rw.discoverfinancial.com"
+MAIL_TO = [
+        "dharmeshchandulal@discover.com"
+]
+
+
+
+today=date.today()
+
+yesterday= today - timedelta(days = 1)
+
+d2=yesterday.strftime('%Y%m%d')
+#print(d2)
+#print("Today's date:", d2)
+
+Date=yesterday.strftime('%m/%d/%y')
+#print(Date)
+
+#Going to DIR1 directory for job logs details.
+os.chdir(DIR1)
+
+#print(os.getcwd())
+
+#Taking all the logs in DIR1 in list format
+y=os.listdir(DIR1)
+
+#print("y=",y)
+
+
+#Patterns which are present in logs from which we are fetching start time and end time.
+pattern1="Start Date"
+pattern2="End Date"
+pattern3="Batch Start Time"
+pattern4="Started"
+pattern5="return code"
+
+#defining extension for feed files
+extension = ".go"
+
+
+#html table for batch jobs
+html =  """
+            <html>
+                <body>
+                    <style>
+                        table {
+                            border-collapse: collapse;
+                        }
+                        th, td {
+                            text-align: center;
+                        padding: 5px;
+                        }
+                    </style>
+                    <p>Hi Team,</p>
+                    <p></p>
+                    <p>Please find the status on Debit Referral daily production support activity below.</p>
+                    <table border="1" cellspacing="0" cellpadding="3">
+                        <tr><td colspan ="7"  bgcolor="Yellow" align="center"><b>Debit Referral Application Production Support Status</b></td></tr>
+                        <tr><td colspan ="7" bgcolor="DodgerBlue" align="center"><b>Batch Jobs</b></td></tr>                        
+                        <tr>
+                            <th bgcolor="MistyRose">
+                                Job Name
+                            </th>
+                            <th bgcolor="MistyRose">
+                                Status
+                            </th>
+                            <th bgcolor="MistyRose">
+                                Date
+                            </th>
+                            <th bgcolor="MistyRose">
+                                Start time
+                            </th>
+                            <th bgcolor="MistyRose">
+                                End time
+                            </th>
+                            <th bgcolor="MistyRose">
+                                Job run duration
+                            </th>
+                            <th bgcolor="MistyRose">
+                                remarks
+                            </th>
+                        </tr>
+                        """
+
+
+index=0
+
+
+
+for i in y:
+        if "debit_extracts" in i:
+            JobName="VCLP025013.PSBP_DEBIT_REFERRAL_EDS.PSBP_DEBITREF_TO_EDS"         
+        if "debit_static_extracts" in i:
+            JobName="VCLP025013.PSBP_DEBIT_REFERRAL_EDS.PSBP_DEBITSTATIC_TO_EDS"
+        if "load_acq_info" in i:
+            JobName="VCLP025013.PSBP_DEBIT_REFERRAL_LOAD.PSBP_LOAD_ACQ_INFO"
+        if "load_ret_info" in i:
+            JobName="VCLP025013.PSBP_DEBIT_REFERRAL_LOAD.PSBP_LOAD_RET_INFO"  
+                        
+        #logs should have today's date only.
+        if d2 in i: 
+            if i!="debit_archive_purge.log":
+                if "debit_static_extracts" not in i:
+                    if "salesforce_extract" not in i:
+    
+                        return_code="return code : 0"
+                        
+            
+                        with open(i) as f:
+                            if return_code in f.read():
+                                status="Completed"
+                            else:
+                                status="Failed"
+                            
+                        file1=open(i, "r")
+                
+                #checking log files line by line.
+                for line in file1:
+                                #From "Start Date" and "End Date" line in logs we are taking Start time and End time.   
+                                if (re.search(pattern1, line)) or (re.search(pattern3, line)):    #pattern1="Start Date"   #pattern3="Batch Start Time"
+                                        a=line
+                                        #print(a)
+                                        b=a.split(": ",1)
+                                        #print(b)
+                                        l=b[1].split()
+                                        m=l[3]
+                                        #print("m=",m)
+                                        Starttime=m
+                                if (re.search(pattern2, line)):           #pattern2="End Date"
+                                        c=line
+                                        #print(c)
+                                        d=c.split(": ",1)
+                                        #print(d)
+                                        l=d[1].split()
+                                        n=l[3]
+                                        #print("n=", n)
+                                        Endtime=n
+                                        
+                                        t1=datetime.strptime(m, "%H:%M:%S")
+
+                                        t2=datetime.strptime(n, "%H:%M:%S")
+
+                                        diff=t2-t1
+
+                                        seconds=diff.total_seconds()
+
+                                        #print(diff.total_seconds(), "secs")
+
+                                        Job_run_duration=time.strftime("%H:%M:%S", time.gmtime(seconds))                                                                        
+                                        
+                            
+                                    
+                                        html += """
+                                                                <tr>
+                                        <td>
+                                                """ + JobName + """
+                                        </td>
+                                        <td>
+                                                """ + status + """
+                                        </td>
+                                        <td>
+                                                """ + Date + """
+                                        </td>
+                                        <td>
+                                                """ + Starttime + """
+                                        </td>
+                                        <td>
+                                                """ + Endtime + """
+                                        </td>
+                                        <td>
+                                                """ + Job_run_duration + """
+                                        </td>
+                                        <td>
+                                                """ + "           " + """
+                                        </td>
+
+                                </tr>   
+                        """
+                index=index+1
+                
+            else:
+                continue
+        
+
+
+
+for i in y:
+    #print(i)
+    if d2 in i:
+        if "debit_static_extracts" in i:
+            #print(i)
+            JobName="VCLP025013.PSBP_DEBIT_REFERRAL_EDS.PSBP_DEBITSTATIC_TO_EDS"
+
+            file1=open(i, "r")
+
+        for x in file1:
+            if (re.search(pattern4, x)):            # pattern4="Started"
+                split_line=x.split()
+                Start_time=split_line[3]
+                #print("debitstatic_start_time = ",Start_time)
+        
+
+        
+            if (re.search(pattern5, x)):             #pattern5="return code"
+                    #print('hi')
+                    split_line=x.split()
+                    End_time=split_line[3]
+                    #print("debitstatic_End_time = ",End_time)
+
+            
+                    t1=datetime.strptime(Start_time, "%H:%M:%S")
+
+                    t2=datetime.strptime(End_time, "%H:%M:%S")
+
+                    diff=t2-t1
+
+                    seconds=diff.total_seconds()
+
+                    #print(diff.total_seconds(), "secs")
+
+                    Job_run_duration=time.strftime("%H:%M:%S", time.gmtime(seconds))
+                
+                    html += """
+
+                            <tr>
+                                <td>""" + JobName + """</td>
+                                <td> Completed </td>
+                                <td>""" + Date + """</td>
+                                <td>""" + Start_time + """</td>
+                                <td>""" + End_time + """</td>
+                                <td>""" + Job_run_duration + """</td>
+                                <td>""" + "    " + """</td>
+                        </tr>
+
+                    """                    
+
+
+            
+
+            
+#Changing directory for feedfiles
+os.chdir(DIR2)
+
+
+#Taking all the feed files in DIR2 in list format.
+x=os.listdir(DIR2)
+
+#print("x=",x)
+
+
+feedFileNamelist=[]
+Countlist=[]
+Tablenamelist=[]
+
+
+for i in x:
+        if d2 in i:     #feedfiles should have today's date only.
+                if i.endswith(extension):     #files ends with ".go" extension only.
+                        c=open(i,"r")
+                        cString = c.read(2048)
+                        #print("cString: " + cString)
+                        feedFileName = cString.split("|")[0]
+                        feedFileNamelist.append(feedFileName)
+                        #print(feedFileName)
+                        count = cString.split("|")[1]
+                        #print("count: " + count)
+                        Countlist.append(count)
+                        tableName = i[6:]
+                        #print("tableName =" + tableName)
+                        tableName = tableName.split(".")[0]
+                        #print("tableName =" + tableName)
+                        tableName = tableName[:-9]
+                        #print("tableName =" + tableName)
+                        Tablenamelist.append(tableName)
+                        #print(count)
+
+#print("feedFileNamelist =", feedFileNamelist)
+
+#print("Countlist =", Countlist)
+
+#print("Tablenamelist =", Tablenamelist)
+
+
+
+
+#html table for feed files.
+html += """
+
+            <style>
+                table,th,tr,td{
+                    border: 1px solid black;
+                }
+            </style>
+            <div></div>
+            <br>  <br>
+            <table>
+                    <hr style="height:2px;border-width:0;color.gray;background-color:white">
+                    <tr>
+                        <td colspan ="4" bgcolor="DodgerBlue" align="center"><b>Feed File Details of the Jobs</b></td>
+                    </tr>
+                    <tr>
+                        <td colspan ="4" bgcolor="LightGrey" align="center"><b>VCLP025013.PSBP_DEBIT_REFERRAL_EDS.PSBP_DEBITSTATIC_TO_EDS</b></td>
+                    </tr>
+
+                    <tr bgcolor="LightGrey">
+                        <th>Table Name</th>
+                        <th>Feed File Name</th>
+                        <th>Status</th>
+                        <th>Count in Feed Files</th>
+                    </tr>
+       """
+
+
+
+VCLP025013_PSBP_DEBIT_REFERRAL_EDS_PSBP_DEBITSTATIC_TO_EDS=[]
+
+
+VCLP025013_PSBP_DEBIT_REFERRAL_EDS_PSBP_DEBITREF_TO_EDS=[]
+
+
+#Differentiated feed files between two jobs.
+count = 0
+for i in feedFileNamelist:
+    #print("feedFileName: "+i)
+    if "GRP" in i or "DISP" in i or "STAT" in i or "ISS_TYP" in i or "REQ_TYP" in i or "KEY_VAL" in i or "MRCH_ACCTE" in i or "ISS_STEP" in i or "MBL_WLLT" in i or "MKT_CMPGN" in i or "ISS_NM" in i or "ADMIN" in i or "ACQ_INFO" in i or "RET_INFO" in i:
+        if "SUB_ISS_NM" not in i:
+            VCLP025013_PSBP_DEBIT_REFERRAL_EDS_PSBP_DEBITSTATIC_TO_EDS.append(i)
+            html += """
+
+                    <tr>
+                        <td>REFER_""" + Tablenamelist[count] + """</td>
+                        <td>""" + i + """</td>
+                        <td bgcolor="Green">Completed</td>
+                        <td>""" + Countlist[count] + """</td>
+                    </tr>
+
+            """
+    count += 1
+
+html += """
+
+            <tr>
+                <td colspan ="4" bgcolor="LightGrey" align="center"><b>VCLP025013_PSBP_DEBIT_REFERRAL_EDS_PSBP_DEBITREF_TO_EDS</b></td>
+            </tr>
+
+"""
+count=0
+for i in feedFileNamelist:
+    if "ISS_TRCKL" in i or "VLDTN_DTL" in i or "RSRCH_DTL" in i or "MRCH_INFO" in i or "SHOP_EXP" in i or "CRD_TRAN" in i or "ISS_HIST" in i or "USR_REQ" in i or "DOC_ATT_DTL" in i or "ASGNT_RPT" in i or "mrch_lead" in i or "SUB_ISS_NM" in i:
+        
+        VCLP025013_PSBP_DEBIT_REFERRAL_EDS_PSBP_DEBITREF_TO_EDS.append(i)
+        html += """
+
+                    <tr>
+                        <td>REFER_""" + Tablenamelist[count] + """</td>
+                        <td>""" + i + """</td>
+                        <td bgcolor="Green">Completed</td>
+                        <td>""" + Countlist[count] + """</td>
+                    </tr>
+
+        """
+    count+=1               
+        
+
+#print("DEBITSTATIC = ", VCLP025013_PSBP_DEBIT_REFERRAL_EDS_PSBP_DEBITSTATIC_TO_EDS)
+
+#print("DEBITREF = ", VCLP025013_PSBP_DEBIT_REFERRAL_EDS_PSBP_DEBITREF_TO_EDS)
+
+
+
+
+#Again going to DIR1 directory for purge job details.
+os.chdir(DIR1)
+
+#print(os.getcwd())
+
+#Taking all the logs in DIR1 in list format
+y=os.listdir(DIR1)
+
+#print("y= ",y)
+
+
+# html table for purge job.
+
+html +=  """
+            
+                    <style>
+                        table {
+                            border-collapse: collapse;
+                        }
+                        th, td {
+                            text-align: center;
+                        padding: 5px;
+                        }
+                    </style>                     
+                    <table border="1" cellspacing="0" cellpadding="3">
+                        <tr><td colspan = "5" bgcolor="DodgerBlue" align="center"><b>Debit Purge Job</b></td></tr> 
+                        <tr>
+                            <th bgcolor="MistyRose">
+                                Table Name
+                            </th>
+                            <th bgcolor="MistyRose">
+                                Jobs
+                            </th>
+                            <th bgcolor="MistyRose">
+                                Date
+                            </th>
+                            <th bgcolor="MistyRose">
+                                Start time
+                            </th>
+                            <th bgcolor="MistyRose">
+                                End time
+                            </th>
+                        </tr>
+                        """
+
+for i in y:
+    if i=="debit_archive_purge.log":
+        file1=open(i, "r")
+        
+        #Start time and End time details for purge job.
+        for line in file1:
+                                    if re.search(pattern4, line):             #pattern4="Started"
+                                        line1=line
+                                        #print(line1)
+                                        split_line=line1.split()
+                                        #print(split_line)
+                                        index_value=split_line[3]
+                                        #print("index_value =",index_value)
+                                        Starttime=index_value
+                                        #print("Starttime =", Starttime)
+                
+                                        html += """"
+                                                                <tr>
+                                        <td>
+                                                """ + "PSBP_DEBIT_REFERRAL_PURGE" + """
+                                        </td>
+                                        <td>
+                                                """ + "VCLP025013.PSBP_DEBIT_REFERRAL_PURGE.PSBP_DEBITREF_ARCHIVE_PURGE" + """
+                                        </td>
+                                        <td>
+                                                """ + Date + """
+                                        </td>
+                                        <td>
+                                                """ + Starttime + """
+                                        </td>
+                                        <td>
+                                                """ + Starttime + """
+                                        </td>
+                                        
+
+                                
+                        """          
+                                         
+html += """</tr></table>"""
+
+
+
+
+
+## FETCHING SNOW INCS FOR RMS.
+
+
+# Set the request parameters
+
+url = 'https://discover.service-now.com/api/now/table/incident?sysparm_query=assignment_group=099077a24c587d00e94b90999e88d447^ORassignment_group=e25bb10ff056658024897c35a0b9466d^active=true^incident_state!=6^incident_state!=7^cmdb_ci=29a71bb44fa82a403966a3928110c78f^ORcmdb_ci=087037f913a417c03320f4b2e144b023&sysparm_display_value=true&sysparm_fields=ecmdb_ci,number,caller_id.name,sys_id,severity,short_description,category,incident_state,u_root_cause,opened_at,comments_and_work_notes'
+
+
+# Eg. User name="admin", Password="admin" for this code sample.
+# Set proper headers
+default_headers = make_headers(proxy_basic_auth='int_bpmreporting:fX4$ra7qE#3hLk',basic_auth='int_bpmreporting:fX4$ra7qE#3hLk')
+
+http = ProxyManager("http://proxy-app.discoverfinancial.com:8080", headers=default_headers)
+
+# Do the HTTP request
+response = http.request('GET', url, headers=default_headers)
+
+
+# Decode the JSON response into a dictionary and use the data
+data = json.loads(response.data.decode('utf-8'))
+
+
+newJson = data['result']
+
+comment_list = []
+
+Final_remark_list=[]
+
+
+for i in newJson:
+    comm=i['comments_and_work_notes'] 
+    comment_list.append(comm)
+    
+
+for i in comment_list:
+    list=i.split("\n\n")
+    list1=list[0]
+    Final_remark_list.append(list1)
+    
+
+print("RMS Report has been sent to the mail.")
+print(" ")
+print("Please check your mail.")
+
+
+# Email Introduction
+html +=          """
+                    <html>
+                        <body>
+                            <style>
+                                table {
+                                    border-collapse: collapse;
+                                }
+                                th, td {
+                                    text-align: center;
+                                padding: 5px;
+                                }
+                            </style>
+                            <hr style="height.2px;border-width:0;color.gray;background-color.white">
+                """
+
+
+# FOR FUNCTIONAL INCS
+
+Functional_count=0                    
+
+Count=0
+
+functional_incident_table = """
+                            <table border="1" cellspacing="0" cellpadding="3">
+                            <p><u><b>Functional Incident Status:</b></u></p>
+                            <hr style="height.2px;border-width:0;color.gray;background-color.white">
+                                <tr><td colspan ="10" bgcolor="DodgerBlue" align="center"><b>RMS Functional Incidents</b></td></tr>                        
+                                <tr>
+                                    <th bgcolor="MistyRose">
+                                        Project
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        INC
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Caller
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Severity
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Short Description
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Categorization
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Incident State
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Root Cause
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Date Opened
+                                    </th>                            
+                                    <th bgcolor="MistyRose">
+                                        Remarks
+                                    </th>
+                                </tr>
+                        """
+
+for i in newJson:
+            
+            if i['caller_id.name']!='Netcool Integration' and i['caller_id.name']!='Moogsoft Integration':
+                Functional_count=Functional_count+1
+            
+                functional_incident_table += """
+                            <tr>
+                                <td>""" +"Debit"+ """</td>
+                                <td>""" + i['number'] + """</td>
+                                <td>""" + i['caller_id.name'] + """</td>
+                                <td>""" + i['severity'] + """</td>
+                                <td>""" + i['short_description'] + """</td>
+                                <td>""" + i['category'] + """</td>
+                                <td>""" + i['incident_state'] + """</td>
+                                <td>""" + "Analysis in progress" + """</td>
+                                <td>""" + i['opened_at'] + """</td>
+                                <td>""" + Final_remark_list[Count] + """</td>
+                            </tr>
+                    """
+                Count+=1
+        
+    
+
+
+
+if Functional_count==0:
+        
+    functional_incident_table +=  """
+                            <tr><td colspan ="10" align="center"><b>No Functional Incidents</b></td></tr>
+                            </table>
+                            """
+else:
+    functional_incident_table += """
+    </table>
+    """
+                        
+                        
+
+
+#FOR NETCOOL INCS
+
+netcool_count=0                
+    
+#Count=0
+
+netcool_incident_table = """
+                            <table border="1" cellspacing="0" cellpadding="3">
+                            <p><u><b>Netcool Incident Status:</b></u></p>
+                            <hr style="height.2px;border-width:0;color.gray;background-color.white">
+                                <tr><td colspan ="10" bgcolor="DodgerBlue" align="center"><b>RMS Netcool Incidents</b></td></tr>                        
+                                <tr>
+                                    <th bgcolor="MistyRose">
+                                        Project
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        INC
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Caller
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Severity
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Short Description
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Categorization
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Incident State
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Root Cause
+                                    </th>
+                                    <th bgcolor="MistyRose">
+                                        Date Opened
+                                    </th>                            
+                                    <th bgcolor="MistyRose">
+                                        Remarks
+                                    </th>
+                                </tr>
+                        """
+
+for i in newJson:
+            
+            if i['caller_id.name']=="Netcool Integration" or i['caller_id.name']=="Moogsoft Integration":
+                netcool_count+=1
+            
+                netcool_incident_table += """
+
+                            <tr>
+                                <td>""" +"Debit"+ """</td>
+                                <td>""" + i['number'] + """</td>
+                                <td>""" + i['caller_id.name'] + """</td>
+                                <td>""" + i['severity'] + """</td>
+                                <td>""" + i['short_description'] + """</td>
+                                <td>""" + i['category'] + """</td>
+                                <td>""" + i['incident_state'] + """</td>
+                                <td>""" + "Analysis in progress" + """</td>
+                                <td>""" + i['opened_at'] + """</td>
+                                <td>""" + Final_remark_list[Count] + """</td>
+                            </tr>
+
+                    """
+                Count+=1
+
+
+    
+
+if netcool_count==0:
+            
+        netcool_incident_table +=  """
+                                <tr><td colspan ="10" align="center"><b>No Netcool Incidents</b></td></tr>
+                                </table>
+                                """
+else:
+    netcool_incident_table +=  """
+    </table>
+    """
+
+
+html = html + functional_incident_table + netcool_incident_table
+
+html += """     </table>
+                    <p></p>
+                    <p>
+                        Thanks and regards,<br>AMS Pulse Automation
+                    </p>
+                </body>
+            </html>
+                """
+
+#Sending all the tables through mail.
+msg = MIMEMultipart('alternative')
+msg['Subject'] = "Debit Referral"
+msg['From'] = MAIL_FROM
+msg['To'] = ", ".join(MAIL_TO)
+#msg['Cc'] = cc
+part1 = MIMEText(html, 'html', 'utf-8')
+msg.attach(part1)
+s = smtplib.SMTP('localhost')
+s.sendmail(MAIL_FROM, MAIL_TO, msg.as_string())
+
