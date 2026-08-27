@@ -1,0 +1,24 @@
+pipeline{
+    agent any
+    stages{
+        stage("Fetch code"){
+            steps{
+                git branch:'abc', url:"www.github.com"
+            }
+        stage ("Build"){
+            steps{
+                sh 'mvn build'
+            }
+        stage("Unit Test"){
+            steps{
+                sh 'mvn test'
+            }
+        stage("checkstyle analysis"){
+            sh 'mvn checkstyle:checkstyle'
+        }
+        }
+        }
+
+        }
+    }
+}

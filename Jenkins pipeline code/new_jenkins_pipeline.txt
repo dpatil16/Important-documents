@@ -1,0 +1,102 @@
+
+## I have installed maven, java, SonarQube and nexus on my jenkins server and not thro' Jenkins ui
+## I have define the tools path (path in my server) and their name in Jenkins global tool configuration.
+## Java source code, java code for testing and pom.xml are 3 separate files. when we run the build maven first looks for pom.xml file where all the instructions are mentioned like how to build or compile the project, how to run the test cases, any dependencies for the code, etc.
+
+###################################################################################
+
+✅ Meaning of mvn clean install (step-by-step):
+
+mvn – Calls Maven (your Java build tool).
+
+clean – Deletes the target directory (removes old compiled files).
+
+install –
+
+Compiles the source code.
+
+Runs tests (if any).
+
+Packages the .jar or .war file.
+
+Installs the final artifact into the local Maven repository (~/.m2/repository) and code/build output on target repo on jenkins
+
+
+#####################################################################################################
+
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone from GitHub') {
+            steps {
+                git 'https://github.com/your-username/your-repo.git'
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('Unit Test (Optional)') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('MySonarQubeServer') {     ### This is temporary env_variable referring to 'MySonarQubeServer' name we've assigned to our
+                                                                 SonarQube server (url and creds) on Jenkins system config., without this 'mvn sonar:sonar' 
+                                                                  will not know on which server to run the analysis.
+
+                    sh 'mvn sonar:sonar'                           ## So sonar:sonar means: Run the sonar goal(analysis) from the sonar plugin.
+
+                }
+            }
+        }
+
+        stage('Upload to Nexus') {
+            steps {
+                sh 'mvn deploy'                           ## No need to give temp. env_variable to nexus here because nexus server url and creds are
+                                                             mentioned in pom.xml and settings.xml
+            }
+        }
+    }
+}
+
+
+
+
+
+## Last stage is pushing the nexus artifacts into production. In our case our prod server is on aws and hence we're following the below steps for that. No need to write the pipeline for this stage, we can explain this verbally to the interviewer.
+
+
+In this phase:
+
+1. Jenkins downloaded the latest artifact (the .jar) from Nexus.
+
+2. Then, it built a Docker image locally using that .jar and a Dockerfile we maintained in the repo. 
+
+## upto step 2 we're doing this manually, team was writing dockerfile and keeping it into repo.
+
+3. That Docker image was then pushed to Amazon ECR. (From this step Jenkins is doing this automatically thro' jenkinfile code that we've written)
+
+4. Once the image was in ECR, Jenkins updated the ECS service to pull the new image and triggered a rolling update in ECS using AWS CLI commands.
+
+
+
+
+## If this is getting difficult then we can also say as we've servers both on cloud and on premise this one is for on cloud servers but for the on premise servers we're following simple steps: (we're doing this manually currently)
+
+1. downloading '.jar' artifacts from nexus repo
+
+2. placing '.jar' in the right directory.
+
+3. restarting the server.
+
+
+
