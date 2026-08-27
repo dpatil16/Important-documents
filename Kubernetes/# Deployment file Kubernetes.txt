@@ -1,0 +1,63 @@
+# Deployment file Kubernetes
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3                         # This is sample deployment file from google
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+apiVersion: apps/v1
+kind: Deployment        ## These are the values for deployment.yaml file. here name of the deployment is 'sample python app'.                       
+metadata:                
+  name: sample-python-app
+  labels:                      ## We have given a label also, lable is like key-value pair. we can track this deployment using lable because names can be 
+    app: python-app            ## same
+spec:                                             
+  replicas: 2                  ## defining the replicas of pods we want to run
+
+  selector:                                        # Here in selector, we are telling to select the pods whose label is "app:python-app". this will be
+    matchLabels:                                   # needed for load-balancer when one pod goes down and new one's role off so LB will know to which pod to
+      app: python-app                              # route the traffic by using the lable
+
+## pod template
+  template:                                        # This is the pod template, here we're saying pods should have the labels "app:python-app" similar to we         
+    metadata:                                      # defined in selector so it will select these pods to route the traffic
+      labels:
+        app: python-app
+
+    spec:
+      containers:
+      - name: sample-python-app
+        image: abhishekf5/python-sample-app-demo:v1     # this value we get in output after building/creating the image. it will be pulled from a container                            ports:                                                  # registry (e.g., DockerHub)
+        - containerPort: 8000                         # we can see this value in docker file.
+
+
+## In Kubernetes, the containers that run inside Pods are usually created using Docker or another container runtime.
+
+## In our case we have already build our docker image from dockerfile (mentioning all the instructions in it) and put it on dockerhub, then only k8s will be able to provide deployment service to our app else container will not run on k8s
+
+## container's name and image from which we're going to build and run the container are two different things we have mentioned in our deployment.yml
+
+- name: sample-python-app (this is the container's/app's name)
+ - image: abhishekf5/python-sample-app-demo:v1 (so abhishekf5/python-sample-app-demo this is the repo name on dockerhub and v1 is the version of image we're going to use for deploying app on k8s)

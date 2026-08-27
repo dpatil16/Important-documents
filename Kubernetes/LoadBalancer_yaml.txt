@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-Django-app-service
+spec:
+  type: LoadBalancer                                # We just changed the type from NodePort to LoadBalancer
+  selector:
+    app: python-app
+  ports:
+    - port: 80
+      targetPort: 8000
+      nodePort: 30007
+
+
+LoadBalancer – VIP entry with valet
+🏛️ "You get a dedicated entrance from the main road, with a fancy valet service."
+
+Used when: You want to expose your service to the internet with a cloud-managed load balancer.
+
+Cloud provider (AWS, GCP, etc.) gives a public IP or DNS to reach your service directly.
+
+It still goes through:
+Cloud Load Balancer ➝ Node ➝ NodePort ➝ Reception(port) ➝ Friend(targetPort)
+
+📌 You get an external IP like http://123.45.67.89 automatically.
+
+🧠 Bonus: LoadBalancer actually uses NodePort under the hood, but with extra cloud support and a cleaner, stable interface.
+
+
+
+
+
+
+# port: 80: This is the port that the service will expose externally. In this case, it means that the application will be exposed on port 80 (the default HTTP port) of the LoadBalancer. External users accessing your application will use this port.
+
+# targetPort: 8000: This is the port inside the container (in the Pods) where the application is running. In your deployment, the container is running on port 8000, so traffic to the service's port 80 will be forwarded to port 8000 in the container.
+
+# nodePort: 30007: This is the port used on each node in the Kubernetes cluster to access the service. Since you are using LoadBalancer type, this field is not strictly necessary, but Kubernetes still assigns a NodePort automatically. It would allow access to the service via NodeIP:30007 if needed (i.e., direct access via the node without the load balancer).

@@ -1,0 +1,73 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-host
+spec:
+  rules:
+  - host: "foo.bar.com"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/bar"
+        backend:
+          service:
+            name: python-sample-app-demo
+            port:
+              number: 80
+
+
+##################################################################################################
+
+✅ host: myapp.com
+This rule will only apply if someone accesses your app via:
+🌐 http://myapp.com
+
+Imagine this is the building address — only people who come to this address will be handled.
+
+✅ paths:
+Now you define which door to forward to based on the path in the URL.
+
+🔽 First path block:
+yaml
+Copy
+Edit
+- path: /login
+  pathType: Prefix
+  backend:
+    service:
+      name: login-service
+      port:
+        number: 80
+path: /login
+→ If someone goes to myapp.com/login, forward the request to...
+
+pathType: Prefix
+→ Match any URL that starts with /login, e.g., /login, /login/user, etc.
+
+backend: service: login-service
+→ Send it to the Kubernetes Service called login-service.
+
+port: 80
+→ Use port 80 of that service (which then reaches the pod’s container via targetPort).
+
+
+#########################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+command---- kubectl apply -f ingress.yml(name of the file)
+
+
+
+kubectl get ingress
+
+-->    name   class  host   address
+                            192.168.64.11
