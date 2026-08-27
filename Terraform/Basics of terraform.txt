@@ -1,0 +1,39 @@
+# Terraform is used to create the infrastructure on AWS cloud or any cloud
+
+# for e.g we created the instance using terraform and shutdown that instance so when next time when we run the code it'll compare instance's current status which is close and it'll apply the code and restart the instance again.   
+
+# Everytime we run the terraform code, It'll create status file and compare the status of instance from this file and make the changes. e.g compare instance's current status which is close and it'll apply the code and restart the instance again.
+
+
+## In the lecture Imran (WE) created the user from IAM services and gave him the admin controls
+
+# Before using any terraform code let it be finding ami id of an instance or creating instance on aws we need to configure AWS in our system.
+## we're doing this locally
+
+So in the lecture Imran teli created the user on aws and then on powershell he gave the command 'aws configure'. This is the standard way to set up AWS credentials on your local machine. 
+
+When you run aws configure, it asks for:
+
+The user we have created in aws from there we'll get the below values.
+
+AWS Access Key ID  
+AWS Secret Access Key
+Default region name (e.g., us-east-1)
+Default output format (e.g., json)         
+
+These credentials are stored in:
+C:\Users\dhapatil\.aws\credentials           
+
+
+
+IMP Data
+
+
+
+##[Currently ignore this] Regarding the configuration of aws to use terraform:- we use ec2 instance with IAM roles attached to it. This IAM role provides the necessary permissions for Terraform to interact with AWS services securely, without requiring access keys. Terraform is installed on the EC2 instance, and we execute Terraform commands from there to provision and manage infrastructure."
+
+# IMP
+
+"In real-world DevOps setups, Terraform code is usually stored in Git repositories and executed through CI/CD pipelines like Jenkins, GitLab CI, or Azure DevOps. These pipelines use secure credential management — like IAM roles, secret managers, or Terraform Cloud — and apply infrastructure changes in controlled environments like staging or production. This ensures security, version control, and team collaboration." 
+
+# so basically I can tell in interview that we push our GitHub repo and using Jenkins ci/cd we make the changes in prod.         
