@@ -1,0 +1,15 @@
+n=4
+
+#Flag
+Is_prime = True
+
+if n>1:
+    for i in range(2,n):
+        if n%i==0:
+            Is_prime= False
+            break
+            
+if n!=1 and Is_prime:
+    print(f"{n} is a prime number")
+else:
+    print(f"{n} is not a prime number")

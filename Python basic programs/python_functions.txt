@@ -1,0 +1,47 @@
+
+
+# def my_func():
+#     print("hi from function")
+    
+# my_func()
+
+
+# def my_func(fname):
+#     print(fname+' patil ')
+    
+# my_func('Dharmesh')
+
+
+# def my_func(fname, lname):
+#      print(fname+" "+lname)
+    
+# my_func('Dharmesh', 'patil')
+
+
+# def my_func(child3):
+#     print(child3)
+    
+# child1='Ram'
+# child2='sham'
+# child3='tere naam'
+    
+# my_func(child3)
+
+
+
+def my_func(food):
+    print(food[1])
+    
+fruits=['apple','banana','grapes']
+    
+my_func(fruits)
+
+
+
+
+def my_func(food):
+    return (food[1])
+    
+fruits=['apple','banana','grapes']
+    
+print(my_func(fruits))
